@@ -11,8 +11,7 @@ import org.junit.Test;
 import static client.ChangeInfoUser.changeInfoUser;
 import static client.CreateUser.createUser;
 import static client.DeleteUser.deleteUser;
-import static org.apache.http.HttpStatus.SC_FORBIDDEN;
-import static org.apache.http.HttpStatus.SC_UNAUTHORIZED;
+import static org.apache.http.HttpStatus.*;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -73,12 +72,12 @@ public class ChangeInfoUserWithWrongDataTest {
         String tokenUserWithRepeatingEmail = validatableResponseCreateUser.extract().path("accessToken");
 
         User changeUser = User.builder()
-                .email(userWithRepeatingEmail.getEmail())
+                .email(user.getEmail())
                 .password(user.getPassword())
                 .name(RandomStringUtils.randomAlphabetic(5))
                 .build();
 
-        ValidatableResponse responseChangeInfo = changeInfoUser(changeUser, token);
+        ValidatableResponse responseChangeInfo = changeInfoUser(changeUser, tokenUserWithRepeatingEmail);
 
         boolean expectedSuccess = false;
         String expectedMessage = "User with such email already exists";
@@ -86,10 +85,10 @@ public class ChangeInfoUserWithWrongDataTest {
         boolean actualSuccess = responseChangeInfo.extract().path("success");
         String actualMessage = responseChangeInfo.extract().path("message");
 
+        deleteUser(tokenUserWithRepeatingEmail);
+
         responseChangeInfo.statusCode(SC_FORBIDDEN);
         assertThat(expectedSuccess, equalTo(actualSuccess));
         assertThat(expectedMessage, equalTo(actualMessage));
-
-        deleteUser(tokenUserWithRepeatingEmail);
     }
 }
